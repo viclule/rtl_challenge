@@ -44,6 +44,7 @@ class TagViewSet(BaseRecipeAttrViewSet):
     queryset = Tag.objects.all()
     serializer_class = serializers.TagSerializer
 
+
 class RetrieveCharacters(APIView):
 
     def pull_chracteres_names_from_page(self, url):
@@ -52,10 +53,20 @@ class RetrieveCharacters(APIView):
         json_data = json.loads(r.text)
         for elem in json_data['results']:
             charactere_names.append(elem['name'])
-        return charactere_names
+        return charactere_names, json_data['info']['next']
+    
+    def pull_all_chracteres_names_from_page(self, url):
+        names_list = []
+        names, next_url = self.pull_chracteres_names_from_page(url)
+        names_list.extend(names)
+        print(next_url)
+        while (next_url != ''):
+            print(next_url)
+            names, next_url = self.pull_chracteres_names_from_page(next_url)
+            names_list.extend(names)
+        return names_list
 
     def get(self, request):
         url = 'https://rickandmortyapi.com/api/character'
-        characters = self.pull_chracteres_names_from_page(url)
+        characters = self.pull_all_chracteres_names_from_page(url)
         return Response(json.dumps(characters))
-
